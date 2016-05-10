@@ -1,0 +1,6 @@
+<FindBugsFilter>
+
+    <!-- add explanation before Match -->
+    <!-- examples http://findbugs.sourceforge.net/manual/filter.html -->
+
+</FindBugsFilter>

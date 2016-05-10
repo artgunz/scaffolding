@@ -1,0 +1,33 @@
+apply plugin: "jacoco"
+
+def excludeSources = ['**/model/**',
+                      '**/property/**',
+                      '**/controller/dto/**'
+]
+
+jacoco {
+    // TODO: update jenkins' plugin before jacoco version
+    toolVersion = "0.7.4.201502262128" //"0.7.6.201602180812"
+    reportsDir = file("$buildDir/jacocoTestReports")
+}
+
+test {
+    jacoco {
+        excludes = excludeSources
+    }
+}
+
+jacocoTestReport {
+    group = "Code Quality"
+
+    doFirst {
+        classDirectories = fileTree(dir: "${buildDir}/classes/main/").exclude(excludeSources)
+    }
+    reports {
+        xml.enabled true
+        html.enabled true
+        html.destination "${jacoco.reportsDir}/html"
+    }
+}
+
+check.dependsOn jacocoTestReport

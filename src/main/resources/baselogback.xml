@@ -1,0 +1,73 @@
+<included>
+
+    <!--
+        Set environment variable: SC_LOG_DIRECTORY (example: e:\logs\)
+
+        You must override next variables:
+        <property name="LOG_FILENAME" value="module-name"/>
+    -->
+
+    <!-- Variable specifies global level for 'root' logger -->
+    <property name="ROOT_LOG_LEVEL" value="${root.log.level:-info}"/>
+
+    <property name="LOG_DIRECTORY" value="${SC_LOG_DIRECTORY:- }"/>
+    <property name="LOG_ERROR_FILENAME_SUFFIX" value="-error" />
+
+    <!-- Path to files-->
+    <property name="LOG_FILE" value="${LOG_DIRECTORY}${LOG_FILENAME}"/>
+    <property name="LOG_ERROR_FILE" value="${LOG_FILE}${LOG_ERROR_FILENAME_SUFFIX}"/>
+
+    <!-- Path to history files of rollingPolicy-->
+    <property name="HISTORY_FOLDER" value="history"/>
+    <property name="LOG_HISTORY_FILE" value="${LOG_DIRECTORY}${HISTORY_FOLDER}/${LOG_FILENAME}"/>
+    <property name="LOG_HISTORY_ERROR_FILE" value="${LOG_HISTORY_FILE}${LOG_ERROR_FILENAME_SUFFIX}"/>
+
+    <!-- Message log message pattern-->
+    <!--
+        Explanation (http://logback.qos.ch/manual/layouts.html):
+        %date   - default pattern {yyyy-MM-dd HH:mm:ss.SSS}
+        %level  - the level of the logging event
+        %thread - thread name
+        %logger - class name that logged the message
+        %mdc    - show value from MDC context
+        %msg    - log message
+        %n      - platform dependent line separator
+        %ex     - print stacktrace
+    -->
+    <property name="FULL_LOG_PATTERN" value="%date %5level [%thread] -- %-40.40logger{39} {%mdc{requestId}}: %msg%n%ex"/>
+    <property name="SHORT_LOG_PATTERN" value="${FULL_LOG_PATTERN}{50}"/>
+
+    <!--Appenders-->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>${SHORT_LOG_PATTERN}</pattern>
+        </encoder>
+        <file>${LOG_FILE}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HISTORY_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <encoder>
+            <pattern>${FULL_LOG_PATTERN}</pattern>
+        </encoder>
+        <file>${LOG_ERROR_FILE}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HISTORY_ERROR_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+    <!--register MBeans (see http://logback.qos.ch/manual/jmxConfig.html)-->
+    <jmxConfigurator />
+
+    <root level="${ROOT_LOG_LEVEL}">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="FILE_ERROR"/>
+    </root>
+
+
+</included>

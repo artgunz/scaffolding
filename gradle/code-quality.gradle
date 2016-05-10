@@ -1,0 +1,65 @@
+apply plugin: 'pmd'
+apply plugin: 'findbugs'
+apply plugin: 'checkstyle'
+
+findbugs {
+    toolVersion = "3.0.1"
+    sourceSets = [sourceSets.main]
+    ignoreFailures = false
+    reportsDir = file("$project.buildDir/findbugsReports")
+    effort = "max"
+    reportLevel = "medium"
+    excludeFilter = file("./gradle/findbugs-exclude.xml")
+}
+
+tasks.remove(findbugsTest)
+tasks.withType(FindBugs) {
+    group = "Code Quality"
+
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+pmd {
+    toolVersion = "5.4.1"
+    sourceSets = [sourceSets.main]
+    ignoreFailures = false
+    consoleOutput = true
+    reportsDir = file("$project.buildDir/pmdReports")
+    ruleSets = []
+    ruleSetFiles = files("$rootDir/gradle/pmd.xml")
+}
+
+tasks.remove(pmdTest)
+tasks.withType(Pmd) {
+    group = "Code Quality"
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+checkstyle {
+    toolVersion = "6.17"
+    sourceSets = [sourceSets.main]
+    ignoreFailures = true //todo false
+    showViolations = true
+    reportsDir = file("$project.buildDir/checkstyleReports")
+    configFile = file("$rootDir/gradle/checkstyle.xml")
+    configProperties = ['baseDir': "$project.projectDir"]
+}
+
+//TODO: can be removed when https://issues.gradle.org/browse/GRADLE-3432 is fixed
+// details https://groups.google.com/forum/#!topic/checkstyle/8JGCfpYLrV0
+checkstyleMain {
+    source  = sourceSets.main.allSource
+}
+
+tasks.remove(checkstyleTest)
+tasks.withType(Checkstyle) {
+    group = "Code Quality"
+
+}

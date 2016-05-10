@@ -1,0 +1,33 @@
+apply plugin: 'java'
+
+task generateBuildProperties() {
+    doLast {
+        def dir = new File(project.buildDir, "resources/main")
+        def file = new File(dir, "build.properties")
+
+        def keys = ['build.number', 'build.name', 'build.author', 'build.url', 'build.java']
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        if (file.exists()) {
+            assert file.delete()
+        }
+
+        assert file.createNewFile()
+        logger.info "writing to [${file}]"
+
+        def map = ["build.number"  : System.getProperty('BUILD_NUMBER', "${buildNumber}")
+                   , "build.url"   : System.getProperty('BUILD_URL', "${buildUrl}")
+                   , "build.name"  : project.group + ':' + project.name + ':' + project.version
+                   , "build.author": System.getProperty('user.name', "${buildAuthor}")
+                   , "build.java"  : System.getProperty('java.version')
+        ]
+
+        file.withWriter('UTF-8') { w ->
+            map.subMap(keys).each { key, value ->
+                w.writeLine "$key=$value"
+            }
+        }
+    }
+}
+classes.dependsOn(generateBuildProperties)

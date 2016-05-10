@@ -1,0 +1,48 @@
+import groovy.sql.Sql
+
+apply plugin: 'java'
+
+configurations { driver }
+repositories { mavenCentral() }
+
+dependencies { driver 'org.postgresql:postgresql:9.4.1208.jre7' }
+
+URLClassLoader loader = GroovyObject.class.classLoader as URLClassLoader
+configurations.driver.each {
+    File file -> loader.addURL(file.toURI().toURL())
+}
+
+def getSql() {
+    Sql.newInstance('jdbc:postgresql://'+dbHostPort+'/postgres', dbUser, dbPassword, dbDriver)
+}
+
+ext {
+    dbName = System.getProperty('DB_PG_NAME', "${testPgDbName}")
+    dbHostPort = System.getProperty('DB_PG_HOST_PORT', 'localhost:5432')
+    dbDriver = 'org.postgresql.Driver'
+    dbUser = System.getProperty('DB_PG_USER', testPgUser)
+    dbPassword = System.getProperty('DB_PG_PASSWORD', testPgPassword)
+}
+
+test {
+    environment = [
+            'DB_PG_NAME': dbName,
+            'DB_PG_HOST_PORT': dbHostPort,
+            'DB_PG_USER': dbUser,
+            'DB_PG_PASSWORD':dbPassword
+    ]
+}
+
+task createTestDb << {
+    def sql = getSql()
+    sql.execute 'DROP DATABASE IF EXISTS ' + dbName
+    sql.execute 'CREATE DATABASE ' + dbName
+}
+
+task dropTestDb << {
+    def sql = getSql()
+    sql.execute 'DROP DATABASE IF EXISTS ' + dbName
+}
+
+clean.dependsOn(createTestDb)
+check.finalizedBy(dropTestDb)
