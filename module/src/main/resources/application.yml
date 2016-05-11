@@ -1,0 +1,14 @@
+server:
+  port: 9999
+
+liquibase:
+    change-log: classpath:/db/databaseChangeLog.xml
+
+spring:
+    datasource:
+        driverClassName: org.postgresql.Driver
+        testOnBorrow: true
+        url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/module}
+        username: ${POSTGRES_USER:postgres}
+        password: ${POSTGRES_PASSWORD:system}
+        validationQuery: SELECT 1

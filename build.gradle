@@ -9,63 +9,105 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.3.3.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
         classpath('gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.4.7')
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url 'https://plugins.gradle.org/m2/' }
+allprojects {
 
-    maven { url "https://repo.spring.io/snapshot" }
-    maven { url "https://repo.spring.io/milestone" }
-    maven {
-        url "${nexusUrl}/content/repositories/snapshots/"
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven {
+            url "${nexusUrl}/content/repositories/snapshots/"
+        }
+        maven {
+            url "${nexusUrl}/content/repositories/releases/"
+        }
     }
-    maven {
-        url "${nexusUrl}/content/repositories/releases/"
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '2.12'
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.12'
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
-apply plugin: 'java'
-apply plugin: 'spring-boot'
-apply plugin: 'com.gorylenko.gradle-git-properties'
+// Configuration for all sub-projects. This excludes root project configuration and :commons
+configure(subprojects) {
+    apply plugin: 'java'
+    apply plugin: 'spring-boot'
+    apply plugin: 'com.gorylenko.gradle-git-properties'
 
-apply from: "$rootDir/gradle/build-properties.gradle"
-apply from: "$rootDir/gradle/code-quality.gradle"
-apply from: "$rootDir/gradle/coverage.gradle"
+    apply from: "$rootDir/gradle/build-properties.gradle"
+    apply from: "$rootDir/gradle/code-quality.gradle"
+    apply from: "$rootDir/gradle/coverage.gradle"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
-group = 'scaffolding.local'
-version = '0.0.1-SNAPSHOT'
+    group = 'scaffolding.local'
+    version = '0.0.1-SNAPSHOT'
 
-gitProperties {
-    gitRepositoryRoot = new File("${project.rootDir}/.")
-}
+    gitProperties {
+        gitRepositoryRoot = new File("${project.rootDir}/.")
+    }
 
-compileJava.options*.compilerArgs = [
-        "-Xlint:serial", "-Xlint:varargs", "-Xlint:cast", "-Xlint:classfile",
-        "-Xlint:dep-ann", "-Xlint:divzero", "-Xlint:empty", "-Xlint:finally",
-        "-Xlint:overrides", "-Xlint:path", "-Xlint:static",
-        "-Xlint:try", "-Xlint:fallthrough", "-Xlint:rawtypes", "-Xlint:deprecation",
-        "-Xlint:unchecked", "-Xlint:-options"
-]
+    compileJava.options*.compilerArgs = [
+            "-Xlint:serial", "-Xlint:varargs", "-Xlint:cast", "-Xlint:classfile",
+            "-Xlint:dep-ann", "-Xlint:divzero", "-Xlint:empty", "-Xlint:finally",
+            "-Xlint:overrides", "-Xlint:path", "-Xlint:static",
+            "-Xlint:try", "-Xlint:fallthrough", "-Xlint:rawtypes", "-Xlint:deprecation",
+            "-Xlint:unchecked", "-Xlint:-options"
+    ]
 
-dependencies {
-    compile("org.springframework.boot:spring-boot-gradle-plugin:1.3.3.RELEASE")
+    dependencies {
+//        compile('org.springframework.cloud:spring-cloud-starter-consul-discovery')
+//        compile('org.springframework.boot:spring-boot-starter-actuator')
+        testCompile('org.testng:testng')
+        testCompile('org.springframework.boot:spring-boot-starter-test')
+    }
 
-    compile('org.springframework.boot:spring-boot-starter-actuator')
-    testCompile('org.testng:testng')
-    testCompile('org.springframework.boot:spring-boot-starter-test')
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:Brixton.RC1"
+        }
 
-    compile 'org.springframework.boot:spring-boot-starter-logging'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    testCompile 'org.springframework.boot:spring-boot-starter-web'
+        dependencies {
+            dependency 'org.springframework:spring-web:4.2.5.RELEASE'
+
+            dependency("org.springframework.boot:spring-boot-starter-test:${springBootVersion}") {
+                exclude 'junit:junit'
+            }
+            dependency 'org.testng:testng:6.9.10'
+
+            dependency 'org.projectlombok:lombok:1.16.6'
+//            dependency 'de.paycash:payment-api:0.0.1-SNAPSHOT'
+            dependency 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.50.2'
+            dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.3'
+        }
+    }
+
+//    docker {
+//        maintainer = 'PayCash Development Org.'
+//    }
+
+
+//    task buildDocker(type: Docker, dependsOn: build) {
+//        push = (project.hasProperty('dockerPush'))? true : false
+//        dryRun = false
+//        tagVersion = project.version.endsWith('-SNAPSHOT')?'latest':project.version
+//
+//        dockerfile = file('../gradle/Dockerfile')
+//        doFirst {
+//            copy {
+//                from jar
+//                into stageDir
+//            }
+//        }
+//    }
 }
